@@ -5,13 +5,22 @@ import { useState, useRef, useEffect } from "react";
 export default function Home() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<
+    { role: "user" | "oa"; text: string }[]
+  >([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // focus on opening the page
   useEffect(() => {
     inputRef.current?.focus();
+
+    const interval = setInterval(async () => {
+      const res = await fetch("/api/messages");
+      const data = await res.json();
+      setMessages(data);
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const sendMessage = async () => {
@@ -25,23 +34,18 @@ export default function Home() {
       body: JSON.stringify({ message }),
     });
 
-    setMessages((prev) => [...prev, message]);
     setMessage("");
     setLoading(false);
-
-    // focus after sending
     inputRef.current?.focus();
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
       <div className="w-full max-w-md bg-gray-800 shadow-2xl rounded-2xl flex flex-col border border-gray-700">
-        {/* Header */}
         <div className="bg-green-600 text-white text-center py-4 rounded-t-2xl font-semibold text-lg">
           LINE OA Web Chat
         </div>
 
-        {/* Chat Box */}
         <div className="flex-1 p-4 space-y-3 overflow-y-auto h-96">
           {messages.length === 0 && (
             <p className="text-gray-400 text-sm text-center">
@@ -52,14 +56,17 @@ export default function Home() {
           {messages.map((msg, index) => (
             <div
               key={index}
-              className="bg-green-500 text-white px-4 py-2 rounded-xl w-fit max-w-xs ml-auto text-sm shadow"
+              className={`px-4 py-2 rounded-xl w-fit max-w-xs text-sm shadow ${
+                msg.role === "user"
+                  ? "bg-green-500 ml-auto"
+                  : "bg-gray-600 mr-auto"
+              }`}
             >
-              {msg}
+              {msg.text}
             </div>
           ))}
         </div>
 
-        {/* Input */}
         <div className="flex gap-2 p-4 border-t border-gray-700 bg-gray-800 rounded-b-2xl">
           <input
             ref={inputRef}
