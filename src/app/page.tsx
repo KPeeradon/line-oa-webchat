@@ -9,7 +9,7 @@ export default function Home() {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // focus ตอนเข้าเว็บครั้งแรก
+  // focus on opening the page
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
@@ -29,7 +29,7 @@ export default function Home() {
     setMessage("");
     setLoading(false);
 
-    // focus กลับหลังส่งเสร็จ
+    // focus after sending
     inputRef.current?.focus();
   };
 
