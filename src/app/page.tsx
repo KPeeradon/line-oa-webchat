@@ -1,26 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<
     { role: "user" | "oa"; text: string }[]
   >([]);
+  const [loading, setLoading] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
-
-    const interval = setInterval(async () => {
-      const res = await fetch("/api/messages");
-      const data = await res.json();
-      setMessages(data);
-    }, 1000);
-
-    return () => clearInterval(interval);
   }, []);
 
   const sendMessage = async () => {
@@ -28,31 +20,29 @@ export default function Home() {
 
     setLoading(true);
 
+    const currentMessage = message;
+
+    setMessages((prev) => [...prev, { role: "user", text: currentMessage }]);
+
+    setMessage("");
+
     await fetch("/api/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message: currentMessage }),
     });
 
-    setMessage("");
     setLoading(false);
-    inputRef.current?.focus();
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-      <div className="w-full max-w-md bg-gray-800 shadow-2xl rounded-2xl flex flex-col border border-gray-700">
-        <div className="bg-green-600 text-white text-center py-4 rounded-t-2xl font-semibold text-lg">
+      <div className="w-full max-w-md bg-gray-800 rounded-2xl flex flex-col shadow-2xl border border-gray-700">
+        <div className="bg-green-600 text-center py-4 font-semibold rounded-t-2xl">
           LINE OA Web Chat
         </div>
 
         <div className="flex-1 p-4 space-y-3 overflow-y-auto h-96">
-          {messages.length === 0 && (
-            <p className="text-gray-400 text-sm text-center">
-              Start a conversation...
-            </p>
-          )}
-
           {messages.map((msg, index) => (
             <div
               key={index}
@@ -67,27 +57,24 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="flex gap-2 p-4 border-t border-gray-700 bg-gray-800 rounded-b-2xl">
+        <div className="flex gap-2 p-4 border-t border-gray-700">
           <input
             ref={inputRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            className="flex-1 bg-gray-700 rounded-xl px-3 py-2"
             placeholder="Type a message..."
-            className="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400"
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                sendMessage();
-              }
+              if (e.key === "Enter") sendMessage();
             }}
           />
 
           <button
             onClick={sendMessage}
             disabled={loading}
-            className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl disabled:opacity-50 transition"
+            className="bg-green-600 px-4 py-2 rounded-xl"
           >
-            {loading ? "Sending..." : "Send"}
+            Send
           </button>
         </div>
       </div>

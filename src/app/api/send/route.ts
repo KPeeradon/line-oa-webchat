@@ -1,25 +1,17 @@
-import axios from "axios"
-import { NextResponse } from "next/server"
-import { messages, lineUserId } from "@/lib/chatStore"
+import axios from "axios";
+import { NextResponse } from "next/server";
+import { messages } from "@/lib/chatStore";
 
 export async function POST(req: Request) {
     try {
-        const { message } = await req.json()
+        const { message } = await req.json();
 
-        if (!lineUserId) {
-            return NextResponse.json(
-                { success: false, error: "No LINE user connected yet" },
-                { status: 400 }
-            )
-        }
-
-        // เก็บข้อความฝั่ง user (เว็บ)
-        messages.push({ role: "user", text: message })
+        // เก็บฝั่ง user
+        messages.push({ role: "user", text: message });
 
         await axios.post(
-            "https://api.line.me/v2/bot/message/push",
+            "https://api.line.me/v2/bot/message/broadcast",
             {
-                to: lineUserId,
                 messages: [{ type: "text", text: message }],
             },
             {
@@ -28,15 +20,15 @@ export async function POST(req: Request) {
                     "Content-Type": "application/json",
                 },
             }
-        )
+        );
 
-        return NextResponse.json({ success: true })
+        return NextResponse.json({ success: true });
     } catch (error: any) {
-        console.error(error.response?.data || error.message)
+        console.error(error.response?.data || error.message);
 
         return NextResponse.json(
-            { success: false, error: "Failed to send message" },
+            { success: false },
             { status: 500 }
-        )
+        );
     }
 }

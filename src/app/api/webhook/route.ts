@@ -1,23 +1,19 @@
-import axios from "axios"
-import { NextResponse } from "next/server"
-import { messages, setLineUserId } from "@/lib/chatStore"
+import axios from "axios";
+import { NextResponse } from "next/server";
+import { messages } from "@/lib/chatStore";
 
 export async function POST(req: Request) {
-    const body = await req.json()
-    const event = body.events?.[0]
+    const body = await req.json();
 
-    if (!event) return NextResponse.json({ status: "no event" })
+    const event = body.events?.[0];
 
-    // get userId
-    if (event.source?.userId) {
-        setLineUserId(event.source.userId)
-    }
+    if (event?.type === "message" && event.message.type === "text") {
+        const userMessage = event.message.text;
 
-    if (event.type === "message" && event.message.type === "text") {
-        const userMessage = event.message.text
+        // เก็บข้อความที่ OA ส่งมา
+        messages.push({ role: "oa", text: userMessage });
 
-        messages.push({ role: "oa", text: userMessage })
-
+        // ตอบกลับ
         await axios.post(
             "https://api.line.me/v2/bot/message/reply",
             {
@@ -35,8 +31,8 @@ export async function POST(req: Request) {
                     "Content-Type": "application/json",
                 },
             }
-        )
+        );
     }
 
-    return NextResponse.json({ status: "ok" })
+    return NextResponse.json({ status: "ok" });
 }
