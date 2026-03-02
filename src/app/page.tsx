@@ -19,11 +19,11 @@ export default function Home() {
 
     setLoading(true);
 
-    // await fetch("/api/send", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ message }),
-    // });
+    await fetch("/api/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
 
     setMessages((prev) => [...prev, message]);
     setMessage("");
