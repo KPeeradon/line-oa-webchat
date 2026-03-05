@@ -1,82 +1,105 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [users, setUsers] = useState<string[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<
-    { role: "user" | "oa"; text: string }[]
-  >([]);
-  const [loading, setLoading] = useState(false);
-
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    const loadUsers = async () => {
+      const res = await fetch("/api/users");
+      const data = await res.json();
+      setUsers(data);
+    };
+
+    loadUsers();
+    const interval = setInterval(loadUsers, 2000);
+
+    return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!selectedUser) return;
+
+    const loadMessages = async () => {
+      const res = await fetch(`/api/messages?userId=${selectedUser}`);
+      const data = await res.json();
+      setMessages(data);
+    };
+
+    loadMessages();
+    const interval = setInterval(loadMessages, 2000);
+
+    return () => clearInterval(interval);
+  }, [selectedUser]);
+
   const sendMessage = async () => {
-    if (!message.trim()) return;
-
-    setLoading(true);
-
-    const currentMessage = message;
-
-    setMessages((prev) => [...prev, { role: "user", text: currentMessage }]);
-
-    setMessage("");
+    if (!message || !selectedUser) return;
 
     await fetch("/api/send", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: currentMessage }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: selectedUser,
+        message,
+      }),
     });
 
-    setLoading(false);
+    setMessage("");
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-      <div className="w-full max-w-md bg-gray-800 rounded-2xl flex flex-col shadow-2xl border border-gray-700">
-        <div className="bg-green-600 text-center py-4 font-semibold rounded-t-2xl">
-          LINE OA Web Chat
-        </div>
+    <div className="flex h-screen bg-gray-900 text-white">
+      {/* User list */}
+      <div className="w-64 border-r border-gray-700 p-4">
+        <h2 className="font-bold mb-4">Users</h2>
 
-        <div className="flex-1 p-4 space-y-3 overflow-y-auto h-96">
-          {messages.map((msg, index) => (
+        {users.map((u) => (
+          <div
+            key={u}
+            onClick={() => setSelectedUser(u)}
+            className={`p-2 cursor-pointer rounded ${
+              selectedUser === u ? "bg-green-600" : "bg-gray-800"
+            }`}
+          >
+            {u.slice(0, 10)}...
+          </div>
+        ))}
+      </div>
+
+      {/* Chat */}
+      <div className="flex flex-col flex-1">
+        <div className="flex-1 p-4 overflow-y-auto space-y-2">
+          {messages.map((m, i) => (
             <div
-              key={index}
-              className={`px-4 py-2 rounded-xl w-fit max-w-xs text-sm shadow ${
-                msg.role === "user"
-                  ? "bg-green-500 ml-auto"
-                  : "bg-gray-600 mr-auto"
+              key={i}
+              className={`max-w-xs px-4 py-2 rounded ${
+                m.role === "admin" ? "bg-green-500 ml-auto" : "bg-gray-600"
               }`}
             >
-              {msg.text}
+              {m.text}
             </div>
           ))}
         </div>
 
-        <div className="flex gap-2 p-4 border-t border-gray-700">
-          <input
-            ref={inputRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            className="flex-1 bg-gray-700 rounded-xl px-3 py-2"
-            placeholder="Type a message..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter") sendMessage();
-            }}
-          />
+        {selectedUser && (
+          <div className="p-4 border-t border-gray-700 flex gap-2">
+            <input
+              className="flex-1 p-2 rounded bg-gray-800"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
 
-          <button
-            onClick={sendMessage}
-            disabled={loading}
-            className="bg-green-600 px-4 py-2 rounded-xl"
-          >
-            Send
-          </button>
-        </div>
+            <button onClick={sendMessage} className="bg-green-600 px-4 rounded">
+              Send
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
