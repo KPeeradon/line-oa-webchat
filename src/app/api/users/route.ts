@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server"
-import { users } from "@/lib/chatStore"
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
+  const users = await prisma.user.findMany({
+    orderBy: {
+      lastActive: "desc",
+    },
+  })
+
   return NextResponse.json(users)
 }

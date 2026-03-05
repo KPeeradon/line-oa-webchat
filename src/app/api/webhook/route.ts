@@ -1,6 +1,5 @@
-import axios from "axios"
 import { NextResponse } from "next/server"
-import { messages, users } from "@/lib/chatStore"
+import { prisma } from "@/lib/prisma"
 
 export async function POST(req: Request) {
   const body = await req.json()
@@ -11,36 +10,26 @@ export async function POST(req: Request) {
     const userId = event.source.userId
     const text = event.message.text
 
-    messages.push({
-      userId,
-      role: "user",
-      text,
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {
+        lastActive: new Date(),
+        unread: { increment: 1 },
+      },
+      create: {
+        id: userId,
+        name: "LINE User",
+        unread: 1,
+      },
     })
 
-    let user = users.find((u) => u.userId === userId)
-
-    if (!user) {
-      const profile = await axios.get(
-        `https://api.line.me/v2/bot/profile/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-          },
-        }
-      )
-
-      user = {
+    await prisma.message.create({
+      data: {
         userId,
-        name: profile.data.displayName,
-        lastActive: Date.now(),
-        unread: 1,
-      }
-
-      users.push(user)
-    } else {
-      user.lastActive = Date.now()
-      user.unread += 1
-    }
+        role: "user",
+        text,
+      },
+    })
   }
 
   return NextResponse.json({ status: "ok" })
