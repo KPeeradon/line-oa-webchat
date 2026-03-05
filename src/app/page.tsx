@@ -132,7 +132,10 @@ export default function Home() {
               }}
             />
 
-            <button onClick={sendMessage} className="bg-green-600 px-4 rounded">
+            <button
+              onClick={sendMessage}
+              className="bg-green-600 px-4 rounded cursor-pointer hover:bg-green-700 transition active:scale-95"
+            >
               Send
             </button>
           </div>
