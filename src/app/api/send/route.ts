@@ -15,7 +15,12 @@ export async function POST(req: Request) {
         "https://api.line.me/v2/bot/message/push",
         {
             to: userId,
-            messages: [{ type: "text", text: message }],
+            messages: [
+                {
+                    type: "text",
+                    text: message,
+                },
+            ],
         },
         {
             headers: {

@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  const [users, setUsers] = useState<string[]>([]);
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
+
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const scrollBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -25,12 +31,14 @@ export default function Home() {
     if (!selectedUser) return;
 
     const loadMessages = async () => {
-      const res = await fetch(`/api/messages?userId=${selectedUser}`);
+      const res = await fetch(`/api/messages?userId=${selectedUser.userId}`);
       const data = await res.json();
       setMessages(data);
+      setTimeout(scrollBottom, 100);
     };
 
     loadMessages();
+
     const interval = setInterval(loadMessages, 2000);
 
     return () => clearInterval(interval);
@@ -45,7 +53,7 @@ export default function Home() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userId: selectedUser,
+        userId: selectedUser.userId,
         message,
       }),
     });
@@ -56,24 +64,28 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-gray-900 text-white">
       {/* User list */}
-      <div className="w-64 border-r border-gray-700 p-4">
-        <h2 className="font-bold mb-4">Users</h2>
+      <div className="w-72 border-r border-gray-700 p-4">
+        <h2 className="text-lg font-bold mb-4">Users</h2>
 
         {users.map((u) => (
           <div
-            key={u}
+            key={u.userId}
             onClick={() => setSelectedUser(u)}
-            className={`p-2 cursor-pointer rounded ${
-              selectedUser === u ? "bg-green-600" : "bg-gray-800"
+            className={`p-3 rounded cursor-pointer mb-2 ${
+              selectedUser?.userId === u.userId ? "bg-green-600" : "bg-gray-800"
             }`}
           >
-            {u.slice(0, 10)}...
+            {u.name}
           </div>
         ))}
       </div>
 
       {/* Chat */}
       <div className="flex flex-col flex-1">
+        <div className="p-4 border-b border-gray-700 font-semibold">
+          {selectedUser ? selectedUser.name : "Select user"}
+        </div>
+
         <div className="flex-1 p-4 overflow-y-auto space-y-2">
           {messages.map((m, i) => (
             <div
@@ -85,6 +97,8 @@ export default function Home() {
               {m.text}
             </div>
           ))}
+
+          <div ref={bottomRef}></div>
         </div>
 
         {selectedUser && (
@@ -93,6 +107,9 @@ export default function Home() {
               className="flex-1 p-2 rounded bg-gray-800"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") sendMessage();
+              }}
             />
 
             <button onClick={sendMessage} className="bg-green-600 px-4 rounded">

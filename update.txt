@@ -1,0 +1,6 @@
+update code v 0.2
+- แสดง ชื่อผู้ใช้ LINE (Display Name) ไม่ใช่ userId
+- Auto Scroll chat
+- UI ดูเหมือน admin chat จริง
+- รองรับ Enter เพื่อส่ง
+- เก็บ user list พร้อมชื่อ

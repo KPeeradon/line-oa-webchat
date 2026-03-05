@@ -4,4 +4,10 @@ export type Message = {
     text: string
 }
 
+export type User = {
+    userId: string
+    name: string
+}
+
 export const messages: Message[] = []
+export const users: User[] = []
