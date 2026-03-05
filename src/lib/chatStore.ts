@@ -1,16 +1,15 @@
 export type Message = {
-    userId: string
-    role: "user" | "admin"
-    text: string
+  userId: string
+  role: "user" | "admin"
+  text: string
 }
 
 export type User = {
-    userId: string
-    name: string
-    unread: number
-    lastActive: number
+  userId: string
+  name: string
+  lastActive: number
+  unread: number
 }
 
-export const users: Record<string, User> = {}
-
-export const messages: Record<string, Message[]> = {}
+export const messages: Message[] = []
+export const users: User[] = []

@@ -65,6 +65,10 @@ npm run dev
 
 ## Changelog
 
+### v0.5
+
+* กลับไปใช้ polling
+
 ### v0.4
 
 * เพิ่ม realtime chat ด้วย Socket.io
