@@ -4,3 +4,6 @@ update code v 0.2
 - UI ดูเหมือน admin chat จริง
 - รองรับ Enter เพื่อส่ง
 - เก็บ user list พร้อมชื่อ
+update code v 0.3
+- Online indicator
+- Chat reset unread

@@ -17,9 +17,9 @@ export async function POST(req: Request) {
             text,
         })
 
-        const exists = users.find((u) => u.userId === userId)
+        let user = users.find((u) => u.userId === userId)
 
-        if (!exists) {
+        if (!user) {
             const profile = await axios.get(
                 `https://api.line.me/v2/bot/profile/${userId}`,
                 {
@@ -29,10 +29,17 @@ export async function POST(req: Request) {
                 }
             )
 
-            users.push({
+            user = {
                 userId,
                 name: profile.data.displayName,
-            })
+                lastActive: Date.now(),
+                unread: 1,
+            }
+
+            users.push(user)
+        } else {
+            user.lastActive = Date.now()
+            user.unread += 1
         }
     }
 

@@ -67,17 +67,37 @@ export default function Home() {
       <div className="w-72 border-r border-gray-700 p-4">
         <h2 className="text-lg font-bold mb-4">Users</h2>
 
-        {users.map((u) => (
-          <div
-            key={u.userId}
-            onClick={() => setSelectedUser(u)}
-            className={`p-3 rounded cursor-pointer mb-2 ${
-              selectedUser?.userId === u.userId ? "bg-green-600" : "bg-gray-800"
-            }`}
-          >
-            {u.name}
-          </div>
-        ))}
+        {users.map((u) => {
+          const online = Date.now() - u.lastActive < 60000;
+
+          return (
+            <div
+              key={u.userId}
+              onClick={() => setSelectedUser(u)}
+              className={`p-3 rounded cursor-pointer mb-2 flex justify-between items-center ${
+                selectedUser?.userId === u.userId
+                  ? "bg-green-600"
+                  : "bg-gray-800"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    online ? "bg-green-400" : "bg-gray-500"
+                  }`}
+                ></span>
+
+                {u.name}
+              </div>
+
+              {u.unread > 0 && (
+                <span className="bg-red-500 text-xs px-2 py-1 rounded-full">
+                  {u.unread}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Chat */}
