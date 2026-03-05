@@ -5,10 +5,16 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const userId = searchParams.get("userId")
 
-  const data = messages.filter((m) => m.userId === userId)
+  if (!userId) {
+    return NextResponse.json([])
+  }
 
-  const user = users.find((u) => u.userId === userId)
-  if (user) user.unread = 0
+  const data = messages[userId] || []
+
+  const user = users[userId]
+  if (user) {
+    user.unread = 0
+  }
 
   return NextResponse.json(data)
 }

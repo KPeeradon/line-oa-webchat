@@ -1,19 +1,62 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { io, Socket } from "socket.io-client";
+
+type User = {
+  userId: string;
+  name: string;
+  unread: number;
+  lastActive: number;
+};
+
+type Message = {
+  userId: string;
+  role: "user" | "admin";
+  text: string;
+};
 
 export default function Home() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
 
+  const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  /*
+  connect socket
+  */
+  useEffect(() => {
+    fetch("/api/socket");
+
+    const socket = io({
+      path: "/api/socket",
+    });
+
+    socketRef.current = socket;
+
+    socket.on("new_message", (msg: Message) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    socket.on("users_update", (users: User[]) => {
+      setUsers(users);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  /*
+  load users ครั้งแรก
+  */
   useEffect(() => {
     const loadUsers = async () => {
       const res = await fetch("/api/users");
@@ -22,11 +65,11 @@ export default function Home() {
     };
 
     loadUsers();
-    const interval = setInterval(loadUsers, 2000);
-
-    return () => clearInterval(interval);
   }, []);
 
+  /*
+  load messages เมื่อเลือก user
+  */
   useEffect(() => {
     if (!selectedUser) return;
 
@@ -34,16 +77,21 @@ export default function Home() {
       const res = await fetch(`/api/messages?userId=${selectedUser.userId}`);
       const data = await res.json();
       setMessages(data);
-      setTimeout(scrollBottom, 100);
     };
 
     loadMessages();
-
-    const interval = setInterval(loadMessages, 2000);
-
-    return () => clearInterval(interval);
   }, [selectedUser]);
 
+  /*
+  auto scroll
+  */
+  useEffect(() => {
+    scrollBottom();
+  }, [messages]);
+
+  /*
+  send message
+  */
   const sendMessage = async () => {
     if (!message || !selectedUser) return;
 
@@ -64,7 +112,7 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-gray-900 text-white">
       {/* User list */}
-      <div className="w-72 border-r border-gray-700 p-4">
+      <div className="w-72 border-r border-gray-700 p-4 overflow-y-auto">
         <h2 className="text-lg font-bold mb-4">Users</h2>
 
         {users.map((u) => {
@@ -107,16 +155,18 @@ export default function Home() {
         </div>
 
         <div className="flex-1 p-4 overflow-y-auto space-y-2">
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={`max-w-xs px-4 py-2 rounded ${
-                m.role === "admin" ? "bg-green-500 ml-auto" : "bg-gray-600"
-              }`}
-            >
-              {m.text}
-            </div>
-          ))}
+          {messages
+            .filter((m) => m.userId === selectedUser?.userId)
+            .map((m, i) => (
+              <div
+                key={i}
+                className={`max-w-xs px-4 py-2 rounded ${
+                  m.role === "admin" ? "bg-green-500 ml-auto" : "bg-gray-600"
+                }`}
+              >
+                {m.text}
+              </div>
+            ))}
 
           <div ref={bottomRef}></div>
         </div>
@@ -132,7 +182,10 @@ export default function Home() {
               }}
             />
 
-            <button onClick={sendMessage} className="bg-green-600 px-4 rounded">
+            <button
+              onClick={sendMessage}
+              className="bg-green-600 px-4 rounded hover:bg-green-500"
+            >
               Send
             </button>
           </div>
